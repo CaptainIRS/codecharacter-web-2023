@@ -27,6 +27,7 @@
     "@arwes/design": "1.0.0-alpha.19",
     "@arwes/sounds": "1.0.0-alpha.19",
     "@codecharacter-2022/client": "workspace:packages/client",
+    "@codecharacter-2022/extension": "workspace:packages/extension",
     "@codecharacter-2022/map-designer": "workspace:packages/map-designer",
     "@codecharacter-2022/renderer": "workspace:packages/renderer",
     "@emotion/css": "11",
@@ -152,7 +153,8 @@
   },
   "jest": {
     "preset": "ts-jest",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "testRegex": "/__tests__/.*test.[jt]sx?$"
   },
   "lint-staged": {
     "*.{ts,.tsx}": [

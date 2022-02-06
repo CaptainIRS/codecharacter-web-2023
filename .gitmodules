@@ -1,3 +1,6 @@
 [submodule "src/assets/codes"]
 	path = src/assets/codes
 	url = https://github.com/delta/codecharacter-default-codes-2022
+[submodule "packages/extension/player_code"]
+	path = packages/extension/player_code
+	url = https://github.com/delta/codecharacter-default-codes-2022
