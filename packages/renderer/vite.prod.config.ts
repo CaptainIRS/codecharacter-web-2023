@@ -13,7 +13,15 @@ export default defineConfig({
       fileName: 'codecharacter-renderer-2023',
     },
     rollupOptions: {
-      external: ['phaser', 'lit', 'react'],
+      external: [
+        'phaser',
+        'lit',
+        'react',
+        '@arwes/core',
+        '@arwes/design',
+        '@arwes/sound',
+        '@arwes/animation',
+      ],
       plugins: [
         replace({
           'typeof CANVAS_RENDERER': "'true'",

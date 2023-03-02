@@ -1,42 +1,80 @@
-import { CurrentUserApi } from '@codecharacter-2023/client';
-import Toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
-import { apiConfig, ApiError } from '../../api/ApiConfig';
-import MapDesigner from '../../components/MapDesigner/MapDesigner';
-import { MapDesignerSteps } from '../../components/TourProvider/MapDesignerSteps';
-import Tour from '../../components/TourProvider/TourProvider';
-import { useAppSelector } from '../../store/hooks';
-import { user } from '../../store/User/UserSlice';
+import { Button, FrameHexagon, Text } from '@arwes/core';
+import { MapApi } from '@codecharacter-2023/client';
+import { MapDesignerComponent } from '@codecharacter-2023/map-designer';
+import toast from 'react-simple-toasts';
+import { apiConfig } from '../../api/ApiConfig';
+import CommitMapModal from '../../components/Modals/CommitMapModal';
+import { useModal } from '../../providers/ModalProvider';
 
-const MapDesignerPage = () => {
-  const currentUserApi = new CurrentUserApi(apiConfig);
-
-  const User = useAppSelector(user);
-  const navigate = useNavigate();
-
-  const setOpened = (opened: boolean) => {
-    if (opened === false) {
-      currentUserApi
-        .updateCurrentUser({
-          name: User.name,
-          country: User.country,
-          college: User.college,
-          updateTutorialLevel: 'NEXT',
-        })
-        .then(() => {
-          navigate('/Leaderboard', { replace: true });
-        })
-        .catch(err => {
-          if (err instanceof ApiError) Toast.error(err.message);
-        });
-    }
-  };
+const MapDesigner = () => {
+  const mapApi = new MapApi(apiConfig);
+  const { setModalState } = useModal();
 
   return (
-    <Tour setOpened={setOpened} steps={MapDesignerSteps}>
-      <MapDesigner pageType={'MapDesigner'} />
-    </Tour>
+    <MapDesignerComponent
+      saveMapCallback={(map: Array<Array<number>>) => {
+        toast(
+          <Button FrameComponent={FrameHexagon} palette="primary">
+            <Text>Saving Latest Map...</Text>
+          </Button>,
+        );
+        mapApi
+          .updateLatestMap({
+            map: JSON.stringify(map),
+            lock: false,
+            mapImage: '',
+          })
+          .then(() => {
+            toast(
+              <Button FrameComponent={FrameHexagon} palette="success">
+                <Text>Map Saved Successfully!</Text>
+              </Button>,
+            );
+          })
+          .catch(() => {
+            toast(
+              <Button FrameComponent={FrameHexagon} palette="error">
+                <Text>Failed to save map!</Text>
+              </Button>,
+            );
+          });
+      }}
+      submitMapCallback={(map: Array<Array<number>>) => {
+        toast(
+          <Button FrameComponent={FrameHexagon} palette="primary">
+            <Text>Submitting Map...</Text>
+          </Button>,
+        );
+        mapApi
+          .updateLatestMap({
+            map: JSON.stringify(map),
+            lock: false,
+            mapImage: '',
+          })
+          .then(() => {
+            toast(
+              <Button FrameComponent={FrameHexagon} palette="success">
+                <Text>Map Submitted Successfully!</Text>
+              </Button>,
+            );
+          })
+          .catch(() => {
+            toast(
+              <Button FrameComponent={FrameHexagon} palette="error">
+                <Text>Failed to submit map!</Text>
+              </Button>,
+            );
+          });
+      }}
+      commitMapCallback={(map: Array<Array<number>>) => {
+        setModalState({
+          isOpen: true,
+          content: <CommitMapModal map={map} />,
+        });
+      }}
+      readonly={false}
+    />
   );
 };
 
-export default MapDesignerPage;
+export default MapDesigner;

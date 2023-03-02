@@ -21,7 +21,7 @@ export class Renderer extends LitElement {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#000000',
     });
   }
 

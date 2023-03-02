@@ -47,6 +47,10 @@ export class TileMap extends Phaser.Scene {
   }
 
   create(): void {
+    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
+      this.cameras.resize(gameSize.width, gameSize.height);
+    });
+
     this.map = this.add.tilemap('map');
 
     const landscapeTile = [

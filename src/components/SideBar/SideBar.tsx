@@ -1,157 +1,134 @@
-import {
-  IsSettingsOpen,
-  isSettingsOpened,
-} from '../../store/EditorSettings/settings';
-
-import codeIcon from '../../assets/code_editor.svg';
-import mapIcon from '../../assets/map.svg';
-import leaderboardIcon from '../../assets/leaderboard.svg';
-import commitIcon from '../../assets/commit.svg';
-import battletvIcon from '../../assets/battletv.svg';
-import documentationIcon from '../../assets/documentation.svg';
-
-import { Link, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import styles from './SideBar.module.css';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import deltaLogo from '../../assets/deltaLogo.png';
-import {
-  changePageState,
-  IsTourOver,
-} from '../../store/DailyChallenge/dailyChallenge';
+import { Button, FrameCorners } from '@arwes/core';
 import { useTour } from '@reactour/tour';
-import { CurrentUserApi } from '@codecharacter-2023/client';
-import { apiConfig } from '../../api/ApiConfig';
+import { rgba } from 'polished';
+import {
+  FaMap,
+  FaTrophy,
+  FaTv,
+  FaHistory,
+  FaQuestionCircle,
+  FaSignOutAlt,
+  FaUser,
+  FaCode,
+  FaCalendarDay,
+  FaFileAlt,
+} from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { useModal } from '../../providers/ModalProvider';
+import { theme } from '../../theme';
+import EditProfileModal from '../Modals/EditProfileModal';
 
-const icons = [
-  { icon: codeIcon, route: 'dashboard', tooltip: 'Code Editor' },
-  { icon: mapIcon, route: 'mapdesigner', tooltip: 'Map Designer' },
-  { icon: leaderboardIcon, route: 'leaderboard', tooltip: 'Leaderboard' },
-  { icon: commitIcon, route: 'history', tooltip: 'Commits' },
-  { icon: battletvIcon, route: 'battletv', tooltip: 'Battle TV' },
-];
-
-const SideBar: React.FunctionComponent = () => {
-  const isSettingsOpen = useAppSelector(IsSettingsOpen);
-
-  function handleOpenSettings() {
-    if (isSettingsOpen === true) dispatch(isSettingsOpened(false));
-    else dispatch(isSettingsOpened(true));
-  }
-  const location = useLocation();
-  const [pathName, setpathName] = useState('/dashboard');
-
+const Sidebar = () => {
   const { setIsOpen } = useTour();
-  const isTourOver = useAppSelector(IsTourOver);
+  const navigate = useNavigate();
 
-  const currentUserApi = new CurrentUserApi(apiConfig);
-
-  const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    setpathName(location.pathname);
-  }, [location]);
-
-  useEffect(() => {
-    setTimeout(() => {
-      currentUserApi.getCurrentUser().then(res => {
-        if (res.isTutorialComplete === false && res.tutorialLevel === 6) {
-          setIsOpen(true);
-        }
-      });
-    }, 1000);
-  }, [isTourOver]);
+  const { setModalState } = useModal();
 
   return (
-    <div>
-      {pathName != '/' &&
-      pathName != '/register' &&
-      pathName != '/login' &&
-      pathName != '/activate' &&
-      pathName != '/reset-password' &&
-      pathName != '/incomplete-profile' ? (
-        <div className={styles.sideBar}>
-          <div className={styles.up}>
-            {icons.map(icon => {
-              if (icon.tooltip === 'Editor Settings') {
-                return (
-                  <div key={icons.indexOf(icon)} className={styles.sideBarIcon}>
-                    <img
-                      src={icon.icon as string}
-                      alt={icon.tooltip}
-                      title={icon.tooltip}
-                      onClick={handleOpenSettings}
-                      className={styles.sideBarIconComponent}
-                    />
-                  </div>
-                );
-              } else if (icon.icon == codeIcon) {
-                return (
-                  <div key={icons.indexOf(icon)} className={styles.sideBarIcon}>
-                    <Link to={icon.route} key={icon.route}>
-                      <img
-                        src={icon.icon as string}
-                        alt={icon.tooltip}
-                        title={icon.tooltip}
-                        className={styles.sideBarIconComponent}
-                        onClick={() => {
-                          dispatch(changePageState('Dashboard'));
-                        }}
-                      />
-                    </Link>
-                  </div>
-                );
-              } else {
-                return (
-                  <div key={icons.indexOf(icon)} className={styles.sideBarIcon}>
-                    <Link to={icon.route} key={icon.route}>
-                      <img
-                        src={icon.icon as string}
-                        alt={icon.tooltip}
-                        title={icon.tooltip}
-                        className={styles.sideBarIconComponent}
-                      />
-                    </Link>
-                  </div>
-                );
-              }
-            })}
-          </div>
-          <div>
-            <div className={styles.sideBarIcon} id="documentation">
-              <div title="View Documentation">
-                <a
-                  href="https://codecharacter-docs-2022.vercel.app/"
-                  rel="noreferrer noopener"
-                  target="_blank"
-                >
-                  <img
-                    src={documentationIcon}
-                    alt="delta"
-                    className={styles.sideBarIconComponent}
-                  />
-                </a>
-              </div>
-            </div>
-            <div className={styles.sideBarIcon} id="DELTA">
-              <div title="Made with ❤ by Delta">
-                <div
-                  className={styles.deltaLogo}
-                  onClick={() => {
-                    window.open('https://delta.nitt.edu/');
-                  }}
-                >
-                  <img src={deltaLogo} alt="delta" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <></>
-      )}
+    <div
+      css={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '0.5rem',
+        borderRight: `1px solid ${rgba(theme.color.border, 0.4)}`,
+      }}
+    >
+      <div css={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <Button
+          className="home-button"
+          FrameComponent={FrameCorners}
+          animator={{ animate: false }}
+          onClick={() => navigate('/')}
+        >
+          <FaCode />
+        </Button>
+        <Button
+          FrameComponent={FrameCorners}
+          animator={{ animate: false }}
+          onClick={() => navigate('map-designer')}
+        >
+          <FaMap />
+        </Button>
+        <Button
+          FrameComponent={FrameCorners}
+          animator={{ animate: false }}
+          onClick={() => navigate('history')}
+        >
+          <FaHistory />
+        </Button>
+        <Button
+          FrameComponent={FrameCorners}
+          animator={{ animate: false }}
+          onClick={() => navigate('leaderboard')}
+        >
+          <FaTrophy />
+        </Button>
+        <Button
+          FrameComponent={FrameCorners}
+          animator={{ animate: false }}
+          onClick={() => navigate('battle-tv')}
+        >
+          <FaTv />
+        </Button>
+        <Button
+          FrameComponent={FrameCorners}
+          animator={{ animate: false }}
+          onClick={() => navigate('daily-challenge')}
+        >
+          <FaCalendarDay />
+        </Button>
+      </div>
+      <div css={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <Button
+          FrameComponent={FrameCorners}
+          animator={{ animate: false }}
+          onClick={() => {
+            navigate('/');
+            setIsOpen(true);
+          }}
+        >
+          <FaQuestionCircle />
+        </Button>
+        <Button
+          FrameComponent={FrameCorners}
+          animator={{ animate: false }}
+          onClick={() =>
+            window.open(
+              'https://codecharacter-docs-2022.vercel.app/',
+              '_blank',
+              'noopener,noreferrer',
+            )
+          }
+        >
+          <FaFileAlt />
+        </Button>
+        <Button
+          FrameComponent={FrameCorners}
+          animator={{ animate: false }}
+          onClick={() =>
+            setModalState({
+              isOpen: true,
+              content: <EditProfileModal />,
+            })
+          }
+        >
+          <FaUser />
+        </Button>
+        <Button
+          FrameComponent={FrameCorners}
+          animator={{ animate: false }}
+          onClick={() => {
+            localStorage.removeItem('token');
+            window.dispatchEvent(new Event('storage'));
+            navigate('/');
+          }}
+        >
+          <FaSignOutAlt />
+        </Button>
+      </div>
     </div>
   );
 };
 
-export default SideBar;
+export default Sidebar;

@@ -3,7 +3,8 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "composite": true,
-    "noEmit": false
+    "noEmit": false,
+    "outDir": "dist"
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "dist"]
