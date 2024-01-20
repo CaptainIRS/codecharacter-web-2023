@@ -3,8 +3,11 @@ export default class TroopType {
 
   range: number;
 
-  constructor(hp: number, range: number) {
+  spritesheet: string;
+
+  constructor(hp: number, range: number, spritesheet: string) {
     this.hp = hp;
     this.range = range;
+    this.spritesheet = spritesheet;
   }
 }

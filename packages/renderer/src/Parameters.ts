@@ -13,7 +13,7 @@ export class Parameters {
 
   static mapTileHeight = 512;
 
-  static mapTileHalfWidth = 256;
+  static mapTileHalfWidth = 200;
 
-  static mapTileHalfHeight = 256;
+  static mapTileHalfHeight = 200;
 }

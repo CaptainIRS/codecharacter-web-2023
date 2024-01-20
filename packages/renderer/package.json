@@ -22,15 +22,15 @@
     "analyze": "cem analyze --litelement"
   },
   "peerDependencies": {
-    "@fortawesome/fontawesome-svg-core": "*",
-    "@fortawesome/free-solid-svg-icons": "*",
-    "@fortawesome/react-fontawesome": "*",
+    "@arwes/animation": "*",
+    "@arwes/core": "*",
+    "@arwes/design": "*",
+    "@arwes/sound": "*",
     "@lit-labs/react": "*",
     "lit": "*",
     "phaser": "*",
     "phaser3-rex-plugins": "*",
     "react": "*",
-    "react-bootstrap": "*",
     "react-dom": "*"
   },
   "devDependencies": {

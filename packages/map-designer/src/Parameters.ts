@@ -13,13 +13,13 @@ export class Parameters {
 
   static mapTileHeight = 512;
 
-  static mapTileHalfHeight = 256;
+  static mapTileHalfHeight = 200;
 
-  static mapTileOffsetX = 256;
+  static mapTileOffsetX = 200;
 
   static mapTileOffsetY = 256;
 
-  static totalCoins = 10000;
+  static totalCoins = 6000;
 
   static mapLocalStorageKey = 'cc-map-designer-map';
 }

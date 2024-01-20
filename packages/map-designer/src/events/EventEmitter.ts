@@ -14,6 +14,8 @@ class MapDesignerEvents {
   static readonly MAP_DATA_CHANGED = 'MAP_DATA_CHANGED';
 
   static readonly CLEAR_MAP = 'CLEAR_MAP';
+
+  static readonly SAVE_MAP = 'SAVE_MAP';
 }
 
 const events = new Phaser.Events.EventEmitter();

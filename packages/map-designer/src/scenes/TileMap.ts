@@ -34,26 +34,52 @@ export class TileMap extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.image('tile', './assets/tile.png');
-    this.load.image('tile_crystal_N', './assets/tile_crystal_N.png');
-    this.load.image('tile_E', './assets/tile_E.png');
-    this.load.image('tile_treeQuad_N', './assets/tile_treeQuad_N.png');
+    this.load.image('building_1', './assets/building_1.png');
+    this.load.image('building_2', './assets/building_2.png');
+    this.load.image('tile_metallic', './assets/tile_metallic.png');
+    this.load.image('tile_f', './assets/tile_f.png');
+    this.load.image('tile_e', './assets/tile_e.png');
+    this.load.image('tile_satellite', './assets/tile_satellite.png');
     TowerConfig.towers.forEach(tower => {
       this.load.image(`${tower.name}-sprite`, `./assets/${tower.asset}`);
     });
     this.load.tilemapTiledJSON('map', './assets/map-2.json');
+    this.load.spritesheet('punk', './assets/punk.png', {
+      frameWidth: 96,
+      frameHeight: 96,
+    });
+    this.load.spritesheet('cyborg', './assets/cyborg.png', {
+      frameWidth: 96,
+      frameHeight: 96,
+    });
+    this.load.spritesheet('drone', './assets/drone.png', {
+      frameWidth: 96,
+      frameHeight: 96,
+    });
+    this.load.spritesheet('bomb', './assets/bomb.png', {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+    this.load.image('laser', './assets/laser.png');
+    this.load.image('shadow', './assets/shadow.png');
   }
 
   create(): void {
+    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
+      this.cameras.resize(gameSize.width, gameSize.height);
+    });
+
     this.map = this.add.tilemap('map');
 
     const landscapeTile = [
-      this.map.addTilesetImage('tile.png', 'tile'),
-      this.map.addTilesetImage('tile_crystal_N.png', 'tile_crystal_N'),
-      this.map.addTilesetImage('tile_E.png', 'tile_E'),
-      this.map.addTilesetImage('tile_treeQuad_N.png', 'tile_treeQuad_N'),
+      this.map.addTilesetImage('tile_f.png', 'tile_f')!,
+      this.map.addTilesetImage('tile_metallic.png', 'tile_metallic')!,
+      this.map.addTilesetImage('tile_satellite.png', 'tile_satellite')!,
+      this.map.addTilesetImage('building_1.png', 'building_1')!,
+      this.map.addTilesetImage('building_2.png', 'building_2')!,
+      this.map.addTilesetImage('tile_e.png', 'tile_e')!,
     ];
-    this.groundLayer = this.map.createLayer('Ground', landscapeTile, 0, 0);
+    this.groundLayer = this.map.createLayer('Ground', landscapeTile, 0, 0)!;
     this.groundLayer.setDepth(0);
 
     this.groundLayer.setCullPadding(6, 6);
@@ -128,6 +154,12 @@ export class TileMap extends Phaser.Scene {
       this,
     );
 
+    events.on(MapDesignerEvents.SAVE_MAP, () => {
+      camera.zoom = 0.1;
+      camera.scrollX = -200;
+      camera.scrollY = 2000;
+    });
+
     this.input.on(
       Phaser.Input.Events.POINTER_MOVE,
       (pointer: Phaser.Input.Pointer) => {
@@ -197,7 +229,11 @@ export class TileMap extends Phaser.Scene {
 
     const storedMapData = localStorage.getItem(Parameters.mapLocalStorageKey);
     if (storedMapData) {
-      this._loadMap(JSON.parse(storedMapData));
+      try {
+        this._loadMap(JSON.parse(storedMapData));
+      } catch (e) {
+        this._loadMap(this._getEmptyMap());
+      }
     } else {
       this._loadMap(this._getEmptyMap());
     }

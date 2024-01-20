@@ -1,6 +1,6 @@
 import replace from '@rollup/plugin-replace';
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, Plugin } from 'vite';
 import dts from 'vite-plugin-dts';
 
 export default defineConfig({
@@ -13,7 +13,15 @@ export default defineConfig({
       fileName: 'codecharacter-renderer-2022',
     },
     rollupOptions: {
-      external: ['phaser', 'lit', 'react'],
+      external: [
+        'phaser',
+        'lit',
+        'react',
+        '@arwes/core',
+        '@arwes/design',
+        '@arwes/sound',
+        '@arwes/animation',
+      ],
       plugins: [
         replace({
           'typeof CANVAS_RENDERER': "'true'",
@@ -23,8 +31,8 @@ export default defineConfig({
           'typeof PLUGIN_FBINSTANT': "'false'",
           'typeof FEATURE_SOUND': "'false'",
           preventAssignment: true,
-        }),
-      ],
+        }) as Plugin,
+      ] as Plugin[],
       output: {
         globals: {
           phaser: 'Phaser',

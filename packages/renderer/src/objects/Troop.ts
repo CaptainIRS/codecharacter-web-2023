@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import TroopType from '../config/TroopType.js';
 import { Parameters } from '../Parameters.js';
 import { HealthBar } from './HealthBar.js';
+import { Shadow } from './Shadow.js';
 
 export type Direction =
   | 'east'
@@ -22,14 +23,14 @@ type Directions = {
 };
 
 const directions: Directions = {
-  east: { offset: 128, x: 2, y: 0 },
-  northEast: { offset: 96, x: 2, y: -1 },
-  north: { offset: 64, x: 0, y: -2 },
-  northWest: { offset: 32, x: -2, y: -1 },
-  west: { offset: 0, x: -2, y: 0 },
-  southWest: { offset: 224, x: -2, y: 1 },
-  south: { offset: 192, x: 0, y: 2 },
-  southEast: { offset: 160, x: 2, y: 1 },
+  east: { offset: 0, x: 2, y: 0 },
+  northEast: { offset: 0, x: 2, y: -1 },
+  north: { offset: 0, x: 0, y: -2 },
+  northWest: { offset: 8, x: -2, y: -1 },
+  west: { offset: 8, x: -2, y: 0 },
+  southWest: { offset: 8, x: -2, y: 1 },
+  south: { offset: 0, x: 0, y: 2 },
+  southEast: { offset: 0, x: 2, y: 1 },
 };
 
 type Animation = {
@@ -43,23 +44,46 @@ type Animations = {
 const anims: Animations = {
   idle: {
     startFrame: 0,
-    endFrame: 4,
+    endFrame: 7,
   },
   walk: {
-    startFrame: 4,
-    endFrame: 12,
+    startFrame: 16,
+    endFrame: 21,
   },
   attack: {
-    startFrame: 12,
-    endFrame: 20,
+    startFrame: 32,
+    endFrame: 39,
   },
   die: {
-    startFrame: 20,
-    endFrame: 28,
+    startFrame: 48,
+    endFrame: 53,
   },
   shoot: {
-    startFrame: 28,
-    endFrame: 32,
+    startFrame: 32,
+    endFrame: 39,
+  },
+};
+
+const droneAnims: Animations = {
+  idle: {
+    startFrame: 0,
+    endFrame: 3,
+  },
+  walk: {
+    startFrame: 16,
+    endFrame: 19,
+  },
+  attack: {
+    startFrame: 32,
+    endFrame: 39,
+  },
+  die: {
+    startFrame: 48,
+    endFrame: 55,
+  },
+  shoot: {
+    startFrame: 32,
+    endFrame: 39,
   },
 };
 
@@ -74,6 +98,8 @@ export class Troop extends Phaser.GameObjects.Image {
 
   animation: Animation;
 
+  animationFrames: Animations;
+
   direction: DirectionParameters;
 
   speed: number;
@@ -81,6 +107,8 @@ export class Troop extends Phaser.GameObjects.Image {
   f: number;
 
   healthBar: HealthBar;
+
+  shadow?: Shadow;
 
   idleTimer: Phaser.Time.TimerEvent;
 
@@ -100,7 +128,7 @@ export class Troop extends Phaser.GameObjects.Image {
     motion: string,
     direction?: Direction | undefined,
   ) {
-    super(scene, x, y, 'skeleton');
+    super(scene, x, y, troopType.spritesheet);
 
     this.troopType = troopType;
 
@@ -108,7 +136,9 @@ export class Troop extends Phaser.GameObjects.Image {
     this.destinationY = y;
 
     this.motion = motion;
-    this.animation = anims[motion];
+    this.animationFrames =
+      this.troopType.spritesheet === 'drone' ? droneAnims : anims;
+    this.animation = this.animationFrames[motion];
     this.direction = directions[direction ?? 'east'];
     this.speed = Parameters.timePerTurn / 10000;
     this.angle = 0;
@@ -116,6 +146,12 @@ export class Troop extends Phaser.GameObjects.Image {
 
     this.healthBar = new HealthBar(scene, x - 30, y - 30);
     this.healthBar.setDepth(this.y);
+
+    this.shadow =
+      this.troopType.spritesheet === 'drone'
+        ? new Shadow(scene, x, y + 50)
+        : undefined;
+    this.shadow?.setDepth(this.y);
 
     this.depth = 50;
 
@@ -160,7 +196,7 @@ export class Troop extends Phaser.GameObjects.Image {
 
   _switchToIdle(): void {
     this.motion = 'idle';
-    this.animation = anims[this.motion];
+    this.animation = this.animationFrames[this.motion];
     this.f = this.animation.startFrame;
   }
 
@@ -168,13 +204,13 @@ export class Troop extends Phaser.GameObjects.Image {
     this.idleTimer.reset(this.idleTimerConfig);
     if (this.destinationX === x && this.destinationY === y) {
       this.motion = 'idle';
-      this.animation = anims[this.motion];
+      this.animation = this.animationFrames[this.motion];
       this.f = this.animation.startFrame;
       return;
     }
     const prevMotion = this.motion;
     this.motion = 'walk';
-    this.animation = anims[this.motion];
+    this.animation = this.animationFrames[this.motion];
     if (prevMotion !== 'walk') {
       this.f = this.animation.startFrame;
     }
@@ -184,8 +220,10 @@ export class Troop extends Phaser.GameObjects.Image {
       y: { value: y, duration: Parameters.timePerTurn },
       onUpdate: () => {
         this.healthBar.setPosition(this.x - 30, this.y - 30);
+        this.shadow?.setPosition(this.x, this.y + 50);
         this.setDepth(this.y);
         this.healthBar.setDepth(this.y);
+        this.shadow?.setDepth(this.y);
       },
     });
     this.x = this.destinationX;
@@ -200,11 +238,12 @@ export class Troop extends Phaser.GameObjects.Image {
   attack(x: number, y: number): void {
     this.idleTimer.reset(this.idleTimerConfig);
     this.motion = 'attack';
-    this.animation = anims[this.motion];
+    this.animation = this.animationFrames[this.motion];
     this.f = this.animation.startFrame;
     this.x = this.destinationX;
     this.y = this.destinationY;
     this.healthBar.setPosition(this.x - 40, this.y - 50);
+    this.shadow?.setPosition(this.x, this.y + 50);
     const dx = x - this.x;
     const dy = y - this.y;
     this._setDirectionFromDelta(dx, -dy);
@@ -213,7 +252,7 @@ export class Troop extends Phaser.GameObjects.Image {
   dead(): void {
     this.idleTimer.reset(this.idleTimerConfig);
     this.motion = 'die';
-    this.animation = anims[this.motion];
+    this.animation = this.animationFrames[this.motion];
     this.f = this.animation.startFrame;
   }
 
@@ -223,6 +262,7 @@ export class Troop extends Phaser.GameObjects.Image {
 
   destroy(fromScene?: boolean): void {
     this.healthBar.destroy();
+    this.shadow?.destroy();
     this.frameTimer.destroy();
     this.idleTimer.destroy();
     super.destroy(fromScene);

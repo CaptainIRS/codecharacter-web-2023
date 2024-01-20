@@ -33,4 +33,12 @@ export class MapDesignerUtils {
       JSON.stringify(mapData),
     );
   }
+
+  /**
+   * Can be used to change the localstorage key from which the map reads
+   * @param localStorageKey local storage key to be set
+   */
+  static setLocalStorageKey(localStorageKey: string): void {
+    Parameters.mapLocalStorageKey = localStorageKey;
+  }
 }

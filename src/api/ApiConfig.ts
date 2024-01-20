@@ -1,5 +1,5 @@
 import { AuthApi, Configuration } from '@codecharacter-2022/client';
-import { BASE_PATH, PREFER_DEV_OVERRIDE, homeUrl } from '../config/config';
+import { BASE_PATH, PREFER_DEV_OVERRIDE } from '../config/config';
 export class ApiError extends Error {
   status: number;
   message: string;
@@ -26,18 +26,9 @@ export const apiConfig = new Configuration({
       },
       post: async context => {
         const statusCode = context.response.status;
-        if (statusCode === 401) {
-          window.location.href = `${homeUrl}/#/login`;
-          window.history.forward();
-        } else if (statusCode === 403) {
-          const authApi = new AuthApi(apiConfig);
-          authApi.getAuthStatus().then(res => {
-            const { status } = res;
-            if (status === 'PROFILE_INCOMPLETE') {
-              window.location.href = `${homeUrl}/#/incomplete-profile`;
-              window.history.forward();
-            }
-          });
+        if (statusCode === 401 || statusCode === 403) {
+          localStorage.removeItem('token');
+          window.dispatchEvent(new Event('storage'));
         }
         if (statusCode >= 400) {
           const body = await context.response.json();

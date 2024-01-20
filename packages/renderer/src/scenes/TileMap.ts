@@ -31,27 +31,45 @@ export class TileMap extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.image('tile', './assets/tile.png');
-    this.load.image('tile_crystal_N', './assets/tile_crystal_N.png');
-    this.load.image('tile_E', './assets/tile_E.png');
-    this.load.image('tile_treeQuad_N', './assets/tile_treeQuad_N.png');
+    this.load.image('building_1', './assets/building_1.png');
+    this.load.image('building_2', './assets/building_2.png');
+    this.load.image('tile_metallic', './assets/tile_metallic.png');
+    this.load.image('tile_f', './assets/tile_f.png');
+    this.load.image('tile_e', './assets/tile_e.png');
+    this.load.image('tile_satellite', './assets/tile_satellite.png');
     TowerConfig.towers.forEach(tower => {
       this.load.image(`${tower.name}-sprite`, `./assets/${tower.asset}`);
     });
     this.load.tilemapTiledJSON('map', './assets/map-2.json');
-    this.load.spritesheet('skeleton', './assets/skeleton8.png', {
-      frameWidth: 128,
-      frameHeight: 128,
+    this.load.spritesheet('punk', './assets/punk.png', {
+      frameWidth: 96,
+      frameHeight: 96,
     });
+    this.load.spritesheet('cyborg', './assets/cyborg.png', {
+      frameWidth: 96,
+      frameHeight: 96,
+    });
+    this.load.spritesheet('drone', './assets/drone.png', {
+      frameWidth: 96,
+      frameHeight: 96,
+    });
+    this.load.spritesheet('bomb', './assets/bomb.png', {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+    this.load.image('laser', './assets/laser.png');
+    this.load.image('shadow', './assets/shadow.png');
   }
 
   create(): void {
     const map = this.add.tilemap('map');
     const landscapeTile = [
-      map.addTilesetImage('tile.png', 'tile'),
-      map.addTilesetImage('tile_crystal_N.png', 'tile_crystal_N'),
-      map.addTilesetImage('tile_E.png', 'tile_E'),
-      map.addTilesetImage('tile_treeQuad_N.png', 'tile_treeQuad_N'),
+      map.addTilesetImage('tile_f.png', 'tile_f'),
+      map.addTilesetImage('tile_metallic.png', 'tile_metallic'),
+      map.addTilesetImage('tile_satellite.png', 'tile_satellite'),
+      map.addTilesetImage('building_1.png', 'building_1'),
+      map.addTilesetImage('building_2.png', 'building_2'),
+      map.addTilesetImage('tile_e.png', 'tile_e'),
     ];
     this.groundLayer = map.createLayer('Ground', landscapeTile, 0, 0);
     this.groundLayer.setDepth(0);
@@ -229,32 +247,42 @@ export class TileMap extends Phaser.Scene {
       (troopId: number, towerId: number, newTowerHp: number) => {
         const troop = this.troops[troopId];
         const tower = this.towers[towerId];
-
         const dx = tower.x - troop.x;
         const dy = tower.y - troop.y;
         const angle = Phaser.Math.RadToDeg(Math.atan2(dy, dx / 2));
-
-        const attackArc = this.add.arc(
-          troop.x,
-          troop.y,
-          Parameters.gridCellHeight / 2,
-          angle - 20,
-          angle + 20,
-          false,
-          0xffffff,
-        );
-        attackArc.closePath = false;
-        attackArc.setStrokeStyle(3, 0xff0000);
-        this.tweens.add({
-          targets: [attackArc],
-          scaleX: troop.troopType.range * 2,
-          scaleY: troop.troopType.range,
-          alpha: 0,
-          duration: Parameters.timePerTurn,
-          ease: 'Power2',
-          onComplete: () => attackArc.destroy(),
-        });
-
+        if (troop.troopType.spritesheet !== 'drone') {
+          const laserSprite = this.add.image(troop.x, troop.y, 'laser');
+          laserSprite.setRotation(angle);
+          this.tweens.add({
+            targets: [laserSprite],
+            x: tower.x,
+            y: tower.y,
+            duration: Parameters.timePerTurn,
+            ease: 'Power2',
+            onComplete: () => laserSprite.destroy(),
+          });
+        } else {
+          const bombSprite = this.add.sprite(troop.x, troop.y, 'bomb', 0);
+          bombSprite.setRotation(angle);
+          this.anims.create({
+            key: 'bomb',
+            frames: this.anims.generateFrameNumbers('bomb', {
+              start: 0,
+              end: 2,
+            }),
+            frameRate: 10,
+            repeat: 0,
+          });
+          bombSprite.play('bomb');
+          this.tweens.add({
+            targets: [bombSprite],
+            x: tower.x,
+            y: tower.y,
+            duration: Parameters.timePerTurn,
+            ease: 'Power2',
+            onComplete: () => bombSprite.destroy(),
+          });
+        }
         tower.healthBar.setHp(newTowerHp);
         troop.attack(tower.x, tower.y);
       },
@@ -265,12 +293,13 @@ export class TileMap extends Phaser.Scene {
         const troop = this.troops[id];
         troop.dead();
         this.tweens.add({
-          targets: [troop, troop.healthBar.bar],
+          targets: [troop, troop.healthBar.bar, troop.shadow?.shadow],
           alpha: 0,
           delay: Parameters.timePerTurn,
           duration: Parameters.timePerTurn,
           onComplete: () => {
             troop.healthBar.destroy();
+            troop.shadow?.destroy();
           },
         });
       } else if (actorType === 'D') {

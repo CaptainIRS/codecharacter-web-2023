@@ -1,10 +1,11 @@
 import replace from '@rollup/plugin-replace';
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, Plugin } from 'vite';
 
 export default defineConfig({
   server: {
     open: '/demo/',
+    port: 3000,
   },
   build: {
     lib: {
@@ -23,8 +24,8 @@ export default defineConfig({
           'typeof PLUGIN_FBINSTANT': "'false'",
           'typeof FEATURE_SOUND': "'false'",
           preventAssignment: true,
-        }),
-      ],
+        }) as Plugin,
+      ] as Plugin[],
       output: {
         globals: {
           phaser: 'Phaser',

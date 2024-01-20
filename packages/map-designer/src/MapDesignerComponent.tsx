@@ -1,28 +1,30 @@
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import {
-  faArrowsAlt,
-  faEraser,
-  faSave,
-  faTimesCircle,
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { createComponent } from '@lit-labs/react';
 import * as React from 'react';
-import {
-  Button,
-  ButtonGroup,
-  ButtonToolbar,
-  OverlayTrigger,
-  Tooltip,
-} from 'react-bootstrap';
 import TowerConfig from './config/TowerConfig';
 import { events, MapDesignerEvents } from './events/EventEmitter';
 import { MapDesigner } from './MapDesigner';
-
+import {
+  ArwesThemeProvider,
+  Button,
+  FrameBox,
+  FramePentagon,
+  StylesBaseline,
+  Text,
+} from '@arwes/core';
+import {
+  FaArrowsAlt,
+  FaSave,
+  FaTimesCircle,
+  FaEraser,
+  FaCodeBranch,
+  FaUpload,
+} from 'react-icons/fa';
 const MapDesignerLayer = createComponent(React, 'cc-map-designer', MapDesigner);
 
 interface MapDesignerComponentProps {
   saveMapCallback: (map: Array<Array<number>>) => void;
+  commitMapCallback?: (map: Array<Array<number>>) => void;
+  submitMapCallback?: (map: Array<Array<number>>) => void;
   readonly: boolean;
 }
 
@@ -43,18 +45,17 @@ const CoinsRemainingText = () => {
   }, [coins]);
 
   return (
-    <p
+    <span
       style={{
-        textAlign: 'center',
-        margin: '0',
-        color: 'white',
-        fontFamily: 'Montserrat',
-        fontSize: '1.5rem',
-        padding: '1rem 1rem 0',
+        fontSize: '4rem',
+        lineHeight: '0.8',
+        width: '40ch',
+        fontFamily: '"Titillium Web", monospace',
       }}
+      id="coins"
     >
-      Coins remaining <br /> {coins}
-    </p>
+      {coins}
+    </span>
   );
 };
 
@@ -76,98 +77,160 @@ export default function MapDesignerComponent(
     };
   }, [mapData]);
 
-  return !props.readonly ? (
-    <>
-      <ButtonToolbar
-        className="justify-content-evenly"
-        style={{
-          position: 'absolute',
-          padding: '0rem 2rem',
-          width: '100%',
-          alignItems: 'center',
-          pointerEvents: 'none',
-        }}
-      >
-        <ButtonGroup style={{ pointerEvents: 'auto', padding: '1rem 1rem 0' }}>
-          {TowerConfig.towers.map(tower => (
-            <OverlayTrigger
-              key={`${tower.name}-overlay`}
-              placement="bottom"
-              delay={{ show: 50, hide: 100 }}
-              overlay={props => (
-                <Tooltip id={`${tower.name}-tooltip`} {...props}>
-                  Name: {tower.name} <br /> Price: {tower.price}
-                </Tooltip>
-              )}
+  return (
+    <ArwesThemeProvider>
+      <StylesBaseline />
+      {!props.readonly ? (
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              padding: '2rem',
+              width: '100%',
+              alignItems: 'center',
+              display: 'flex',
+              justifyContent: 'space-evenly',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              pointerEvents: 'none',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                gap: '0.2rem',
+                pointerEvents: 'auto',
+              }}
             >
-              <Button
-                key={tower.name}
-                variant="outline-light"
+              {TowerConfig.towers.map(tower => (
+                <Button
+                  FrameComponent={FramePentagon}
+                  key={tower.name}
+                  animator={{ animate: false }}
+                >
+                  <div
+                    key={tower.name}
+                    onClick={() => {
+                      events.emit(MapDesignerEvents.TOWER_SELECTED, tower);
+                    }}
+                  >
+                    <img
+                      src={`../assets/${tower.thumbnailAsset}`}
+                      width="50px"
+                      height="auto"
+                      alt={tower.name}
+                    />
+                    <br />
+                    <span>{tower.name}</span>
+                  </div>
+                </Button>
+              ))}
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '0.2rem',
+                pointerEvents: 'auto',
+              }}
+            >
+              <div
+                key="move"
                 onClick={() => {
-                  events.emit(MapDesignerEvents.TOWER_SELECTED, tower);
+                  events.emit(MapDesignerEvents.MOVE_SELECTED);
                 }}
               >
-                <img
-                  src={`../assets/${tower.thumbnailAsset}`}
-                  alt={tower.name}
-                />
-                <br />
-                <span>{tower.name}</span>
-              </Button>
-            </OverlayTrigger>
-          ))}
-        </ButtonGroup>
-        <ButtonGroup style={{ pointerEvents: 'auto', padding: '1rem 1rem 0' }}>
-          <Button
-            key="move"
-            variant="outline-light"
-            onClick={() => {
-              events.emit(MapDesignerEvents.MOVE_SELECTED);
-            }}
-          >
-            <FontAwesomeIcon size={'2x'} icon={faArrowsAlt as IconProp} />
-            <br />
-            <span>Move</span>
-          </Button>
-          <Button
-            key="clear"
-            variant="outline-light"
-            onClick={() => {
-              events.emit(MapDesignerEvents.CLEAR_MAP);
-            }}
-          >
-            <FontAwesomeIcon size={'2x'} icon={faTimesCircle as IconProp} />
-            <br />
-            <span>Clear</span>
-          </Button>
-          <Button
-            key="erase"
-            variant="outline-light"
-            onClick={() => {
-              events.emit(MapDesignerEvents.ERASER_SELECTED);
-            }}
-          >
-            <FontAwesomeIcon size={'2x'} icon={faEraser as IconProp} />
-            <br />
-            <span>Erase</span>
-          </Button>
-          <Button
-            key="save"
-            variant="outline-light"
-            onClick={() => props.saveMapCallback(mapData)}
-          >
-            <FontAwesomeIcon size={'2x'} icon={faSave as IconProp} />
-            <br />
-            <span>Save</span>
-          </Button>
-        </ButtonGroup>
-        <CoinsRemainingText />
-      </ButtonToolbar>
-      <MapDesignerLayer />
-    </>
-  ) : (
-    <div style={{ pointerEvents: 'none' }}>
-      <MapDesignerLayer />
-    </div>
+                <Button FrameComponent={FrameBox} style={{ width: '100%' }}>
+                  <FaArrowsAlt />
+                  <br />
+                  <br />
+                  Move
+                </Button>
+              </div>
+              <div
+                key="clear"
+                onClick={() => {
+                  events.emit(MapDesignerEvents.CLEAR_MAP);
+                }}
+              >
+                <Button FrameComponent={FrameBox} style={{ width: '100%' }}>
+                  <FaTimesCircle />
+                  <br />
+                  <br />
+                  Clear
+                </Button>
+              </div>
+              <div
+                key="erase"
+                onClick={() => {
+                  events.emit(MapDesignerEvents.ERASER_SELECTED);
+                }}
+              >
+                <Button FrameComponent={FrameBox} style={{ width: '100%' }}>
+                  <FaEraser />
+                  <br />
+                  <br />
+                  Erase
+                </Button>
+              </div>
+              <div key="save" onClick={() => props.saveMapCallback(mapData)}>
+                <Button FrameComponent={FrameBox} style={{ width: '100%' }}>
+                  <FaSave />
+                  <br />
+                  <br />
+                  Save
+                </Button>
+              </div>
+              <div
+                key="commit"
+                onClick={() =>
+                  props.commitMapCallback
+                    ? props.commitMapCallback(mapData)
+                    : undefined
+                }
+              >
+                <Button FrameComponent={FrameBox} style={{ width: '100%' }}>
+                  <FaCodeBranch />
+                  <br />
+                  <br />
+                  Commit
+                </Button>
+              </div>
+              <div
+                key="submit"
+                onClick={() =>
+                  props.submitMapCallback
+                    ? props.submitMapCallback(mapData)
+                    : undefined
+                }
+              >
+                <Button FrameComponent={FrameBox} style={{ width: '100%' }}>
+                  <FaUpload />
+                  <br />
+                  <br />
+                  Submit
+                </Button>
+              </div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <CoinsRemainingText />
+              <br />
+              <Text>Coins Remaining</Text>
+            </div>
+          </div>
+          <MapDesignerLayer />
+        </div>
+      ) : (
+        <div style={{ pointerEvents: 'none' }}>
+          <MapDesignerLayer />
+        </div>
+      )}
+    </ArwesThemeProvider>
   );
 }

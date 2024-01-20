@@ -1,72 +1,107 @@
+import { Button, FrameHexagon, Text } from '@arwes/core';
 import {
-  CurrentUserApi,
+  BASE_PATH,
   Game,
+  GameApi,
   GameStatus,
   Notification,
 } from '@codecharacter-2022/client';
-import { apiConfig } from '../../api/ApiConfig';
 import { Stomp } from '@stomp/stompjs';
 import { useEffect } from 'react';
-import Toast from 'react-hot-toast';
-import { getLogAction } from '../../store/rendererLogs/logSlice';
-import { useAppDispatch } from '../../store/hooks';
-import { BASE_PATH } from '../../config/config';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-simple-toasts';
+import { apiConfig } from '../../api/ApiConfig';
+import { useAuth } from '../../providers/AuthProvider';
 
-export const Websocket: React.FunctionComponent = () => {
-  const currentUserapi = new CurrentUserApi(apiConfig);
-  const dispatch = useAppDispatch();
+const Websocket = () => {
+  const { userId } = useAuth();
+
+  const gameApi = new GameApi(apiConfig);
+  const navigate = useNavigate();
+
   useEffect(() => {
-    if (localStorage.getItem('token') !== null) {
-      currentUserapi.getCurrentUser().then(user => {
-        const baseUrl = BASE_PATH.replace('http', 'ws');
-        const url = `${baseUrl}/ws`;
-        const wsClient = Stomp.over(() => new WebSocket(url));
-        wsClient.brokerURL = url;
-        const handleConnect = () => {
-          wsClient.subscribe(`/updates/${user.id}`, message => {
-            const game = JSON.parse(message.body) as Game;
-            switch (game.status) {
-              case GameStatus.Executing:
-                Toast.success('Executing now...');
-                break;
-              case GameStatus.Executed:
-                Toast.success('Executed successfully!');
-                // TODO: find non-hacky way to do this
-                dispatch(
-                  getLogAction({
-                    id: game.id,
-                    callback: () => (window.location.href = './#/dashboard'),
-                  }),
-                );
-                break;
-              case GameStatus.ExecuteError:
-                Toast.error('Execution error!');
-                dispatch(
-                  getLogAction({
-                    id: game.id,
-                    callback: () => (window.location.href = './#/dashboard'),
-                  }),
-                );
-                break;
-            }
-            message.ack();
-          });
-          wsClient.subscribe(`/notifications/${user.id}`, message => {
-            const notification = JSON.parse(message.body) as Notification;
-            Toast(() => (
-              <div>
-                <h3>{notification.title}</h3>
-                {notification.content}
-              </div>
-            ));
-            message.ack();
-          });
-        };
-
-        wsClient.onConnect = handleConnect;
-        wsClient.activate();
-      });
+    if (!userId) {
+      return;
     }
-  }, []);
-  return <div></div>;
+    const baseUrl = `${BASE_PATH.replace('http', 'ws')}/ws`;
+    const wsClient = Stomp.over(() => new WebSocket(baseUrl));
+    wsClient.brokerURL = baseUrl;
+
+    wsClient.onConnect = () => {
+      wsClient.subscribe(`/notifications/${userId}`, message => {
+        const notification = JSON.parse(message.body) as Notification;
+        toast(
+          <Button FrameComponent={FrameHexagon} palette="primary">
+            <h6>{notification.title}</h6>
+            <Text>{notification.content}</Text>
+          </Button>,
+        );
+        message.ack();
+      });
+
+      wsClient.subscribe(`/updates/${userId}`, message => {
+        const game = JSON.parse(message.body) as Game;
+        switch (game.status) {
+          case GameStatus.Executing:
+            toast(
+              <Button FrameComponent={FrameHexagon} palette="primary">
+                <Text>Executing now...</Text>
+              </Button>,
+            );
+            break;
+          case GameStatus.Executed:
+            toast(
+              <Button FrameComponent={FrameHexagon} palette="success">
+                <Text>Executed Successfully!</Text>
+              </Button>,
+            );
+            gameApi
+              .getGameLogsByGameId(game.id)
+              .then(log => {
+                navigate('/dashboard', { state: { log } });
+              })
+              .catch(() => {
+                toast(
+                  <Button FrameComponent={FrameHexagon} palette="error">
+                    <Text>Failed to fetch logs!</Text>
+                  </Button>,
+                );
+              });
+            break;
+          case GameStatus.ExecuteError:
+            toast(
+              <Button FrameComponent={FrameHexagon} palette="error">
+                <Text>Execution Error!</Text>
+              </Button>,
+            );
+            gameApi
+              .getGameLogsByGameId(game.id)
+              .then(log => {
+                navigate('/dashboard', { state: { log } });
+              })
+              .catch(() => {
+                toast(
+                  <Button FrameComponent={FrameHexagon} palette="error">
+                    <Text>Failed to fetch logs!</Text>
+                  </Button>,
+                );
+              });
+            break;
+          default:
+            break;
+        }
+        message.ack();
+      });
+    };
+
+    wsClient.activate();
+
+    return () => {
+      wsClient.deactivate();
+    };
+  }, [userId]);
+
+  return null;
 };
+
+export default Websocket;
